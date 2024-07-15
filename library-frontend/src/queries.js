@@ -46,4 +46,16 @@ export const EDIT_AUTHOR = gql`
         }
     }
     `;
-//   },
+
+export const CREATE_USER = gql`
+  mutation createUser($username: String!, $favoriteGenre: String!, $password: String!) {
+    createUser(
+      username: $username
+      favoriteGenre: $favoriteGenre
+      password: $password
+    ) {
+      username
+      favoriteGenre
+    }
+  }
+`;
