@@ -4,18 +4,22 @@ import Books from './components/Books';
 import NewBook from './components/NewBook';
 import CreateUser from './components/CreateUser';
 import LoginForm from './components/LoginForm';
+import RecommendedBooks from './components/RecommendedBooks';
 
 const App = () => {
   const [page, setPage] = useState('authors');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const handleLogin = () => {
+  const handleLogin = (loggedInUser) => {
     setIsLoggedIn(true);
-    setPage('add');
+    setUser(loggedInUser);
+    setPage('recommended');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUser(null);
     setPage('authors');
   };
 
@@ -25,6 +29,7 @@ const App = () => {
         <button onClick={() => setPage('authors')}>authors</button>
         <button onClick={() => setPage('books')}>books</button>
         {isLoggedIn && <button onClick={() => setPage('add')}>add book</button>}
+        {isLoggedIn && <button onClick={() => setPage('recommended')}>recommended books</button>}
         {isLoggedIn ? (
           <button onClick={handleLogout}>logout</button>
         ) : (
@@ -38,6 +43,7 @@ const App = () => {
       <Authors show={page === 'authors'} isLoggedIn={isLoggedIn} />
       <Books show={page === 'books'} />
       <NewBook show={page === 'add'} isLoggedIn={isLoggedIn} />
+      {page === 'recommended' && <RecommendedBooks show={page === 'recommended'} user={user} />}
       {page === 'createUser' && <CreateUser />}
       {page === 'login' && <LoginForm setPage={setPage} onLogin={handleLogin} />}
     </div>

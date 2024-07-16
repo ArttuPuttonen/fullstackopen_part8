@@ -50,8 +50,9 @@ const typeDefs = gql`
     authorCount: Int!
     allBooks(author: String, genre: String): [Book!]!
     allAuthors: [Author!]!
-    allGenres: [String!]!  # Add this line
+    allGenres: [String!]!
     me: User
+    recommendedBooks: [Book!]!
   }
 
   type Mutation {
@@ -83,10 +84,6 @@ const resolvers = {
     authorCount: async () => await Author.countDocuments(),
     allBooks: async (parent, args) => {
       const filter = {};
-      if (args.author) {
-        const author = await Author.findOne({ name: args.author });
-        if (author) filter.author = author._id;
-      }
       if (args.genre) {
         filter.genres = { $in: [args.genre] };
       }
@@ -103,7 +100,14 @@ const resolvers = {
     },
     me: () => {
       return null; // For simplicity, return null for the 'me' query.
-    }
+    },
+    recommendedBooks: async (parent, args, context) => {
+      const currentUser = context.currentUser;
+      if (!currentUser) {
+        throw new UserInputError("not authenticated");
+      }
+      return await Book.find({ genres: { $in: [currentUser.favoriteGenre] } }).populate('author');
+    },
   },
   Author: {
     bookCount: async (parent) => await Book.countDocuments({ author: parent._id }),
@@ -155,7 +159,18 @@ const resolvers = {
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
+  context: async ({ req }) => {
+    const auth = req ? req.headers.authorization : null;
+    if (auth && auth.toLowerCase().startsWith('bearer ')) {
+      const decodedToken = jwt.verify(
+        auth.substring(7), process.env.JWT_SECRET
+      );
+      const currentUser = await User.findById(decodedToken.id);
+      return { currentUser };
+    }
+    return {};
+  }
 });
 
 startStandaloneServer(server, {
