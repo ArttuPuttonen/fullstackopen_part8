@@ -7,7 +7,7 @@ import LoginForm from './components/LoginForm';
 
 const App = () => {
   const [page, setPage] = useState('authors');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track logged-in state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleLogin = () => {
     setIsLoggedIn(true);

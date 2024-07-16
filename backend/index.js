@@ -50,6 +50,7 @@ const typeDefs = gql`
     authorCount: Int!
     allBooks(author: String, genre: String): [Book!]!
     allAuthors: [Author!]!
+    allGenres: [String!]!  # Add this line
     me: User
   }
 
@@ -92,6 +93,14 @@ const resolvers = {
       return await Book.find(filter).populate('author');
     },
     allAuthors: async () => await Author.find({}),
+    allGenres: async () => {
+      const books = await Book.find({});
+      const genres = new Set();
+      books.forEach(book => {
+        book.genres.forEach(genre => genres.add(genre));
+      });
+      return Array.from(genres);
+    },
     me: () => {
       return null; // For simplicity, return null for the 'me' query.
     }

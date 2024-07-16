@@ -1,29 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client';
-import { ALL_BOOKS, BOOKS_BY_GENRE } from '../queries';
+import { ALL_BOOKS, ALL_GENRES } from '../queries';
 
 const Books = ({ show }) => {
   const [genre, setGenre] = useState('');
-  const { loading, error, data, refetch } = useQuery(
-    genre ? BOOKS_BY_GENRE : ALL_BOOKS,
-    {
-      variables: { genre },
-    }
-  );
+  const { loading, error, data, refetch } = useQuery(ALL_BOOKS, {
+    variables: { genre },
+  });
+  const { loading: genresLoading, data: genresData } = useQuery(ALL_GENRES);
+
+  useEffect(() => {
+    refetch({ genre });
+  }, [genre, refetch]);
 
   if (!show) {
     return null;
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading || genresLoading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   const books = data.allBooks;
-
-  const handleGenreChange = (e) => {
-    setGenre(e.target.value);
-    refetch();
-  };
+  const genres = genresData.allGenres;
 
   return (
     <div>
@@ -31,12 +29,13 @@ const Books = ({ show }) => {
       <div>
         <label>
           Filter by Genre:
-          <select value={genre} onChange={handleGenreChange}>
+          <select value={genre} onChange={(e) => setGenre(e.target.value)}>
             <option value="">All</option>
-            <option value="classic">Classic</option>
-            <option value="fiction">Fiction</option>
-            <option value="science">Science</option>
-            {/* Add more genres as needed */}
+            {genres.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
           </select>
         </label>
       </div>
