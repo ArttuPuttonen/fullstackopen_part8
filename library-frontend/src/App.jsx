@@ -35,9 +35,9 @@ const App = () => {
         )}
       </div>
 
-      <Authors show={page === 'authors'} />
+      <Authors show={page === 'authors'} isLoggedIn={isLoggedIn} />
       <Books show={page === 'books'} />
-      <NewBook show={page === 'add'} />
+      <NewBook show={page === 'add'} isLoggedIn={isLoggedIn} />
       {page === 'createUser' && <CreateUser />}
       {page === 'login' && <LoginForm setPage={setPage} onLogin={handleLogin} />}
     </div>
