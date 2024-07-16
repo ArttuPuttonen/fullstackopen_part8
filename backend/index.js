@@ -3,14 +3,13 @@ const { ApolloServer } = require('@apollo/server');
 const { startStandaloneServer } = require('@apollo/server/standalone');
 const gql = require('graphql-tag');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { UserInputError } = require('apollo-server-errors');
 const Author = require('./models/author');
 const Book = require('./models/book');
 const User = require('./models/user');
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const JWT_SECRET = process.env.JWT_SECRET;
 
 mongoose.connect(MONGODB_URI)
   .then(() => {
@@ -93,18 +92,15 @@ const resolvers = {
       return await Book.find(filter).populate('author');
     },
     allAuthors: async () => await Author.find({}),
-    me: (parent, args, context) => {
-      return context.currentUser;
+    me: () => {
+      return null; // For simplicity, return null for the 'me' query.
     }
   },
   Author: {
     bookCount: async (parent) => await Book.countDocuments({ author: parent._id }),
   },
   Mutation: {
-    addBook: async (parent, args, context) => {
-      if (!context.currentUser) {
-        throw new AuthenticationError("not authenticated");
-      }
+    addBook: async (parent, args) => {
       let author = await Author.findOne({ name: args.author });
       if (!author) {
         author = new Author({ name: args.author });
@@ -114,10 +110,7 @@ const resolvers = {
       await book.save();
       return book.populate('author');
     },
-    editAuthor: async (parent, args, context) => {
-      if (!context.currentUser) {
-        throw new AuthenticationError("not authenticated");
-      }
+    editAuthor: async (parent, args) => {
       const author = await Author.findOne({ name: args.name });
       if (!author) return null;
       author.born = args.setBornTo;
@@ -151,24 +144,14 @@ const resolvers = {
         id: user._id,
       };
 
-      return { value: jwt.sign(userForToken, JWT_SECRET) };
+      return { value: "dummy_token" }; // Return a dummy token for now
     }
   }
 };
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers,
-  context: async ({ req }) => {
-    const auth = req ? req.headers.authorization : null;
-    if (auth && auth.toLowerCase().startsWith('bearer ')) {
-      const decodedToken = jwt.verify(
-        auth.substring(7), JWT_SECRET
-      );
-      const currentUser = await User.findById(decodedToken.id);
-      return { currentUser };
-    }
-  }
+  resolvers
 });
 
 startStandaloneServer(server, {
