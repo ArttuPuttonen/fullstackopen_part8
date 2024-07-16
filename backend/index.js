@@ -4,7 +4,8 @@ const { startStandaloneServer } = require('@apollo/server/standalone');
 const gql = require('graphql-tag');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const { UserInputError } = require('apollo-server-errors');
+const jwt = require('jsonwebtoken');
+const { UserInputError, GraphQLError } = require('apollo-server-errors');
 const Author = require('./models/author');
 const Book = require('./models/book');
 const User = require('./models/user');
@@ -98,8 +99,8 @@ const resolvers = {
       });
       return Array.from(genres);
     },
-    me: () => {
-      return null; // For simplicity, return null for the 'me' query.
+    me: (parent, args, context) => {
+      return context.currentUser;
     },
     recommendedBooks: async (parent, args, context) => {
       const currentUser = context.currentUser;
@@ -140,21 +141,49 @@ const resolvers = {
         passwordHash
       });
 
-      return user.save();
+      try {
+        return await user.save();
+      } catch (error) {
+        throw new GraphQLError('Creating the user failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.username,
+            error
+          }
+        });
+      }
     },
     login: async (parent, args) => {
+      console.log('Login attempt:', args.username);
       const user = await User.findOne({ username: args.username });
-      const passwordCorrect = user === null
-        ? false
-        : await bcrypt.compare(args.password, user.passwordHash);
-
-      if (!(user && passwordCorrect)) {
-        throw new UserInputError("wrong credentials");
+      if (!user) {
+        console.log('User not found');
+        throw new GraphQLError('wrong credentials', {
+          extensions: {
+            code: 'BAD_USER_INPUT'
+          }
+        });
       }
 
-      return { value: "dummy_token" }; // Return a dummy token for now
-    }
-  }
+      const passwordCorrect = await bcrypt.compare(args.password, user.passwordHash);
+      if (!passwordCorrect) {
+        console.log('Incorrect password');
+        throw new GraphQLError('wrong credentials', {
+          extensions: {
+            code: 'BAD_USER_INPUT'
+          }
+        });
+      }
+
+      const userForToken = {
+        username: user.username,
+        id: user._id,
+      };
+
+      console.log('Login successful:', user.username);
+      return { value: jwt.sign(userForToken, process.env.JWT_SECRET) };
+    },
+  },
 };
 
 const server = new ApolloServer({

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { LOGIN } from '../queries';
 
-const LoginForm = ({ setPage, onLogin }) => {
+const LoginForm = ({ setToken, setPage }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -16,7 +16,9 @@ const LoginForm = ({ setPage, onLogin }) => {
     });
 
     if (result.data) {
-      onLogin();
+      const token = result.data.login.value;
+      setToken(token); // This should call the handleLogin in App
+      setPage('add');
     }
 
     setUsername('');

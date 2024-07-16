@@ -9,17 +9,19 @@ import RecommendedBooks from './components/RecommendedBooks';
 const App = () => {
   const [page, setPage] = useState('authors');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('library-user-token'));
 
-  const handleLogin = (loggedInUser) => {
+  const handleLogin = (token) => {
     setIsLoggedIn(true);
-    setUser(loggedInUser);
-    setPage('recommended');
+    setToken(token);
+    localStorage.setItem('library-user-token', token);
+    setPage('add');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setUser(null);
+    setToken(null);
+    localStorage.removeItem('library-user-token');
     setPage('authors');
   };
 
@@ -43,9 +45,9 @@ const App = () => {
       <Authors show={page === 'authors'} isLoggedIn={isLoggedIn} />
       <Books show={page === 'books'} />
       <NewBook show={page === 'add'} isLoggedIn={isLoggedIn} />
-      {page === 'recommended' && <RecommendedBooks show={page === 'recommended'} user={user} />}
+      <RecommendedBooks show={page === 'recommended'} />
       {page === 'createUser' && <CreateUser />}
-      {page === 'login' && <LoginForm setPage={setPage} onLogin={handleLogin} />}
+      {page === 'login' && <LoginForm setToken={handleLogin} setPage={setPage} />}
     </div>
   );
 };
