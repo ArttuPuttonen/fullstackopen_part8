@@ -7,11 +7,15 @@ import LoginForm from './components/LoginForm';
 
 const App = () => {
   const [page, setPage] = useState('authors');
-  const [token, setToken] = useState(localStorage.getItem('library-user-token'));
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track logged-in state
 
-  const logout = () => {
-    setToken(null);
-    localStorage.removeItem('library-user-token');
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    setPage('add');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
     setPage('authors');
   };
 
@@ -20,22 +24,22 @@ const App = () => {
       <div>
         <button onClick={() => setPage('authors')}>authors</button>
         <button onClick={() => setPage('books')}>books</button>
-        {token ? (
-          <>
-            <button onClick={() => setPage('add')}>add book</button>
-            <button onClick={logout}>logout</button>
-          </>
+        {isLoggedIn && <button onClick={() => setPage('add')}>add book</button>}
+        {isLoggedIn ? (
+          <button onClick={handleLogout}>logout</button>
         ) : (
-          <button onClick={() => setPage('login')}>login</button>
+          <>
+            <button onClick={() => setPage('login')}>login</button>
+            <button onClick={() => setPage('createUser')}>create user</button>
+          </>
         )}
-        <button onClick={() => setPage('createUser')}>create user</button>
       </div>
 
       <Authors show={page === 'authors'} />
       <Books show={page === 'books'} />
       <NewBook show={page === 'add'} />
       {page === 'createUser' && <CreateUser />}
-      {page === 'login' && <LoginForm setToken={setToken} setPage={setPage} />}
+      {page === 'login' && <LoginForm setPage={setPage} onLogin={handleLogin} />}
     </div>
   );
 };

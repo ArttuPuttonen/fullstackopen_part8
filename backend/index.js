@@ -139,11 +139,6 @@ const resolvers = {
         throw new UserInputError("wrong credentials");
       }
 
-      const userForToken = {
-        username: user.username,
-        id: user._id,
-      };
-
       return { value: "dummy_token" }; // Return a dummy token for now
     }
   }

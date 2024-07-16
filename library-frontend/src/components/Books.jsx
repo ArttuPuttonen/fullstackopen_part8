@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@apollo/client';
-import { ALL_BOOKS } from '../queries';
+import { ALL_BOOKS, BOOKS_BY_GENRE } from '../queries';
 
 const Books = ({ show }) => {
-  const { loading, error, data } = useQuery(ALL_BOOKS);
+  const [genre, setGenre] = useState('');
+  const { loading, error, data, refetch } = useQuery(
+    genre ? BOOKS_BY_GENRE : ALL_BOOKS,
+    {
+      variables: { genre },
+    }
+  );
 
   if (!show) {
     return null;
@@ -14,9 +20,26 @@ const Books = ({ show }) => {
 
   const books = data.allBooks;
 
+  const handleGenreChange = (e) => {
+    setGenre(e.target.value);
+    refetch();
+  };
+
   return (
     <div>
       <h2>Books</h2>
+      <div>
+        <label>
+          Filter by Genre:
+          <select value={genre} onChange={handleGenreChange}>
+            <option value="">All</option>
+            <option value="classic">Classic</option>
+            <option value="fiction">Fiction</option>
+            <option value="science">Science</option>
+            {/* Add more genres as needed */}
+          </select>
+        </label>
+      </div>
       <table>
         <tbody>
           <tr>
