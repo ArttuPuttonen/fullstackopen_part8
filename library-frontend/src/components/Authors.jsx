@@ -1,23 +1,14 @@
 import React, { useState } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import { ALL_AUTHORS, EDIT_AUTHOR } from '../queries';
 
-const Authors = ({ show, isLoggedIn }) => {
-  const { loading, error, data } = useQuery(ALL_AUTHORS);
+const Authors = ({ show, authors }) => {
   const [name, setName] = useState('');
   const [born, setBorn] = useState('');
+
   const [editAuthor] = useMutation(EDIT_AUTHOR, {
     refetchQueries: [{ query: ALL_AUTHORS }],
   });
-
-  if (!show) {
-    return null;
-  }
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-
-  const authors = data.allAuthors;
 
   const submit = async (event) => {
     event.preventDefault();
@@ -28,15 +19,19 @@ const Authors = ({ show, isLoggedIn }) => {
     setBorn('');
   };
 
+  if (!show) {
+    return null;
+  }
+
   return (
     <div>
       <h2>Authors</h2>
       <table>
         <tbody>
           <tr>
-            <th>Name</th>
-            <th>Born</th>
-            <th>Books</th>
+            <th></th>
+            <th>born</th>
+            <th>books</th>
           </tr>
           {authors.map((a) => (
             <tr key={a.name}>
@@ -47,7 +42,8 @@ const Authors = ({ show, isLoggedIn }) => {
           ))}
         </tbody>
       </table>
-      {isLoggedIn && (
+
+      {authors.length > 0 && (
         <div>
           <h3>Set birthyear</h3>
           <form onSubmit={submit}>
